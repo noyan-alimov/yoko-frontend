@@ -2,21 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -24,4 +10,54 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer base {
+  :root {
+    --background: 142 50% 6%;
+    --foreground: 142 5% 90%;
+    --card: 142 50% 6%;
+    --card-foreground: 142 5% 90%;
+    --popover: 142 50% 5%;
+    --popover-foreground: 142 5% 90%;
+    --primary: 142 69.2% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 104 30% 15%;
+    --muted-foreground: 142 5% 60%;
+    --accent: 104 30% 15%;
+    --accent-foreground: 142 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 142 5% 90%;
+    --border: 142 30% 18%;
+    --input: 142 30% 18%;
+    --ring: 142 69.2% 58%;
+    --radius: 0.5rem;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.wallet-adapter-button-trigger,
+.wallet-adapter-modal-wrapper {
+  background-color: hsl(var(--secondary)) !important;
+}
+
+.wallet-adapter-button-trigger:hover,
+.wallet-adapter-modal-button-close,
+.wallet-adapter-button:hover {
+  background-color: hsl(var(--muted)) !important;
 }
