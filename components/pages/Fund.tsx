@@ -1,11 +1,16 @@
 "use client";
 
 import { type Asset, getFund, type Token } from "@/lib/getFund";
-import { getYokoTxn, sendTxn, truncateAddress } from "@/lib/utils";
+import {
+  formatDecimal,
+  getYokoTxn,
+  sendTxn,
+  truncateAddress,
+} from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -14,7 +19,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
@@ -30,6 +34,8 @@ import { REGEX_9_DECIMAL, USDC_ASSET, WSOL_ASSET } from "@/lib/constants";
 import { SelectAsset } from "../SelectAsset";
 import { ChevronDown, ArrowDownUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useJupQuote } from "@/queries/useJupQuote";
+import { Skeleton } from "../ui/skeleton";
 
 export const FundPage: FC<{ fundManagerPubkey: string }> = ({
   fundManagerPubkey,
@@ -60,7 +66,7 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
   }, [fundQuery.data?.other_tokens, fundQuery.data?.main_token]);
 
   const fundDetails = (
-    <div>
+    <div className="min-w-80">
       {fundQuery.data && (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-4">
@@ -73,11 +79,11 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
               <p>{fundQuery.data.manager_fee}%</p>
             </div>
             <div className="flex gap-2 items-end justify-between">
-              <p className="text-sm text-muted-foreground">Total USD Amount</p>
-              <p>{fundQuery.data.total_usd_amount}</p>
+              <p className="text-sm text-muted-foreground">Total USD Balance</p>
+              <p>${formatDecimal(fundQuery.data.total_usd_amount, 2)}</p>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">Main Token</p>
               <TokenInfo token={fundQuery.data.main_token} />
@@ -99,7 +105,7 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
   );
 
   return (
-    <div className="flex flex-col items-center gap-10">
+    <div className="flex flex-col gap-10 items-center">
       {fundDetails}
       {!connected && (
         <p>Please connect your wallet to deposit into this fund</p>
@@ -144,7 +150,6 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
             </CardHeader>
             <CardContent>
               <SwapForm
-                fundPubkey={fundQuery.data.fund_pubkey}
                 mainToken={fundQuery.data.main_token}
                 fundOwnedAssets={fundOwnedAssets}
               />
@@ -336,8 +341,8 @@ const CreatePayoutForm: FC<{ fundPubkey: string }> = ({ fundPubkey }) => {
 
 const TokenInfo: FC<{ token: Token }> = ({ token }) => {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2 items-center">
+    <div className="flex justify-between items-end">
+      <div className="flex gap-1 items-center">
         <img
           src={token.asset.image}
           alt={token.asset.symbol}
@@ -345,23 +350,22 @@ const TokenInfo: FC<{ token: Token }> = ({ token }) => {
         />
         <p className="text-sm text-muted-foreground">{token.asset.symbol}</p>
       </div>
-      <div className="flex gap-2 items-end justify-between">
-        <p className="text-sm text-muted-foreground">Amount</p>
-        <p>{token.ui_amount}</p>
-      </div>
-      <div className="flex gap-2 items-end justify-between">
-        <p className="text-sm text-muted-foreground">USD Amount</p>
-        <p>{token.usd_amount}</p>
+      <div className="flex gap-1 items-center justify-between">
+        <span>{token.ui_amount}</span>
+        <span className="text-sm text-muted-foreground">
+          (${formatDecimal(token.usd_amount, 2)})
+        </span>
       </div>
     </div>
   );
 };
 
 const SwapForm: FC<{
-  fundPubkey: string;
   mainToken: Token;
   fundOwnedAssets: Asset[];
-}> = ({ fundPubkey, mainToken, fundOwnedAssets }) => {
+}> = ({ mainToken, fundOwnedAssets }) => {
+  const { publicKey, signTransaction } = useWallet();
+
   const [inputAsset, setInputAsset] = useState<Asset>(mainToken.asset);
   const [outputAsset, setOutputAsset] = useState<Asset>(
     mainToken.asset.mint === USDC_ASSET.mint ? WSOL_ASSET : USDC_ASSET
@@ -370,12 +374,69 @@ const SwapForm: FC<{
   const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
 
   const [inputAmount, setInputAmount] = useState("");
+  const [debouncedInputAmount, setDebouncedInputAmount] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInputAmount(inputAmount);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [inputAmount]);
+
+  const jupQuoteQuery = useJupQuote({
+    inputToken: inputAsset,
+    outputToken: outputAsset,
+    amount: debouncedInputAmount,
+  });
+
+  const isJupQuoteLoading = useMemo(
+    () => jupQuoteQuery.isPending && Number(inputAmount) > 0,
+    [jupQuoteQuery.isPending, inputAmount]
+  );
+
+  const swapMutation = useMutation({
+    mutationFn: async () => {
+      if (!signTransaction || !publicKey) return;
+      const txn = await getYokoTxn("get-swap-msg", {
+        fund_manager: publicKey.toBase58(),
+        from_mint: inputAsset.mint,
+        to_mint: outputAsset.mint,
+        in_amount: Number(debouncedInputAmount),
+        quote: jupQuoteQuery.data?.quoteData,
+      });
+      const signedTxn = await signTransaction(txn);
+      const signature = await sendTxn(signedTxn);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      toast.success(
+        <div className="flex items-center gap-2">
+          Swap successful.{" "}
+          <a
+            href={`https://solscan.io/tx/${signature}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            View on Solscan.
+          </a>
+        </div>,
+        {
+          duration: 5000,
+        }
+      );
+    },
+    onError: () => {
+      toast.error("Failed to swap");
+    },
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h4 className="text-sm text-muted-foreground">You're Selling</h4>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2">
           <Drawer open={inputDrawerOpen} onOpenChange={setInputDrawerOpen}>
             <DrawerTrigger asChild>
               <Button
@@ -404,28 +465,54 @@ const SwapForm: FC<{
               </DrawerHeader>
             </DrawerContent>
           </Drawer>
-          <Input
-            value={inputAmount}
-            onChange={(e) => {
-              if (e.target.value[0] === ".") {
-                setInputAmount("0" + e.target.value);
-              } else if (REGEX_9_DECIMAL.test(e.target.value)) {
-                setInputAmount(e.target.value);
-              }
-            }}
-            placeholder="0.00"
-            className="text-right"
-          />
+          <div className="flex flex-col gap-1 w-full">
+            <Input
+              value={inputAmount}
+              onChange={(e) => {
+                if (e.target.value[0] === ".") {
+                  setInputAmount("0" + e.target.value);
+                } else if (REGEX_9_DECIMAL.test(e.target.value)) {
+                  setInputAmount(e.target.value);
+                }
+              }}
+              placeholder="0.00"
+              className="text-right"
+            />
+            {jupQuoteQuery.data && (
+              <span className="text-xs text-muted-foreground text-right">
+                ${jupQuoteQuery.data.inputUsdPrice}
+              </span>
+            )}
+            {!jupQuoteQuery.data && !isJupQuoteLoading && (
+              <span className="opacity-0 text-xs text-muted-foreground text-right">
+                $0.00
+              </span>
+            )}
+            {isJupQuoteLoading && (
+              <div className="flex justify-end">
+                <Skeleton className="h-[16px] w-[40px] text-right" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex justify-center items-center">
-        <Button size="icon" variant="secondary" className="rounded-full">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="rounded-full"
+          onClick={() => {
+            setInputAsset(outputAsset);
+            setOutputAsset(inputAsset);
+            setInputAmount(jupQuoteQuery.data?.outAmountUserFormat ?? "");
+          }}
+        >
           <ArrowDownUp size={18} />
         </Button>
       </div>
       <div className="flex flex-col gap-2">
         <h4 className="text-sm text-muted-foreground">You're Buying</h4>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2">
           <Drawer open={outputDrawerOpen} onOpenChange={setOutputDrawerOpen}>
             <DrawerTrigger asChild>
               <Button
@@ -454,10 +541,48 @@ const SwapForm: FC<{
               </DrawerHeader>
             </DrawerContent>
           </Drawer>
-          <Input disabled placeholder="0.00" className="text-right" />
+          <div className="flex flex-col gap-1 w-full">
+            {jupQuoteQuery.data && (
+              <Input
+                value={jupQuoteQuery.data.outAmountUserFormat ?? ""}
+                disabled
+                placeholder="0.00"
+                className="text-right"
+              />
+            )}
+            {!isJupQuoteLoading && !jupQuoteQuery.data && (
+              <Input disabled placeholder="0.00" className="text-right" />
+            )}
+            {isJupQuoteLoading && (
+              <div className="flex justify-end">
+                <Skeleton className="h-[36px] w-[100px] text-right" />
+              </div>
+            )}
+            {jupQuoteQuery.data && (
+              <span className="text-xs text-muted-foreground text-right">
+                ${jupQuoteQuery.data.outputUsdPrice}
+              </span>
+            )}
+            {!jupQuoteQuery.data && !isJupQuoteLoading && (
+              <span className="opacity-0 text-xs text-muted-foreground text-right">
+                $0.00
+              </span>
+            )}
+            {isJupQuoteLoading && (
+              <div className="flex justify-end">
+                <Skeleton className="h-[16px] w-[40px] text-right" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <Button className="mt-4">Swap</Button>
+      <Button
+        className="mt-4"
+        disabled={!jupQuoteQuery.data || swapMutation.isPending}
+        onClick={() => swapMutation.mutate()}
+      >
+        {swapMutation.isPending ? "Swapping..." : "Swap"}
+      </Button>
     </div>
   );
 };

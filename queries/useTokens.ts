@@ -50,7 +50,6 @@ export const useTokens = (userInput: string) => {
         image: hit.document.logoURI,
         verified: hit.document.tags.includes("verified"),
       }));
-      console.log("tokens.length", tokens.length);
       return tokens;
     },
     enabled: Boolean(userInput.trim()),

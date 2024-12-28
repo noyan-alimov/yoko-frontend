@@ -55,3 +55,7 @@ export const getYokoTxn = async (
 export const truncateAddress = (address: string) => {
   return `${address.slice(0, 4)}..${address.slice(-4)}`;
 };
+
+export const formatDecimal = (num: number, maxDecimals: number = 9): string => {
+  return num.toFixed(maxDecimals).replace(/\.?0+$/, "");
+};
