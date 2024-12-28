@@ -103,7 +103,7 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-8 justify-center h-full w-full">
+    <div className="flex-1 flex flex-col items-center gap-12 justify-center h-full w-full">
       <div className="flex flex-col items-center gap-4 w-full">
         <Input
           placeholder="Fund Manager Address"
@@ -121,9 +121,9 @@ export const HomePage = () => {
         </Button>
       </div>
       {fundOfCurrentUserQuery.data && publicKey && (
-        <Button variant="link">
-          <Link href={`/funds/${publicKey.toBase58()}`}>View Your Fund</Link>
-        </Button>
+        <Link href={`/funds/${publicKey.toBase58()}`}>
+          <Button variant="link">View Your Fund</Button>
+        </Link>
       )}
       {fundOfCurrentUserQuery.error && <p>Error fetching fund</p>}
       {!connected && <p>Connect your wallet to create a fund</p>}

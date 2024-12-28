@@ -32,6 +32,35 @@ export type FundType = {
   total_deposited: number;
   payouts_counter: number;
   manager_fee: number;
-  main_mint: string;
-  other_mints: string[];
+  main_token: Token;
+  other_tokens: Token[];
+  total_usd_amount: number;
+};
+
+export type PriceInfo = {
+  price_per_token: number;
+  currency: string;
+};
+
+export type Asset = {
+  mint: string;
+  image: string;
+  symbol: string;
+  decimals: number;
+};
+
+export type AssetWithPriceInfo = Asset & {
+  price_info: PriceInfo;
+};
+
+export type Token = {
+  asset: AssetWithPriceInfo;
+  token_account: string;
+  amount: number;
+  ui_amount: number;
+  usd_amount: number;
+};
+
+export type JupAsset = Asset & {
+  verified: boolean;
 };

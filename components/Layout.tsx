@@ -9,12 +9,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   return (
     <div className="flex flex-col min-h-screen p-4">
       <header className="flex justify-between items-center">
-        <Link href="/">
-          <h1 className="text-2xl font-bold">Yoko</h1>
+        <Link href="/" className="text-2xl font-bold">
+          Yoko
         </Link>
         <WalletMultiButton />
       </header>
-      <main className="flex-1 flex flex-col h-full">{children}</main>
+      <main className="flex-1 flex flex-col h-full px-2 py-10">{children}</main>
     </div>
   );
 };
