@@ -53,9 +53,11 @@ const Token: FC<{ item: Asset; handleClick: (token: Asset) => void }> = ({
     <Button
       className="flex-row items-center justify-between w-full"
       variant="ghost"
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
         handleClick(token);
       }}
+      type="button"
     >
       <div className="flex gap-3 items-center">
         <img
