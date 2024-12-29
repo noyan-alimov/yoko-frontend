@@ -53,8 +53,13 @@ const Token: FC<{ item: Asset; handleClick: (token: Asset) => void }> = ({
     <Button
       className="flex-row items-center justify-between w-full"
       variant="ghost"
+      onTouchStart={(e) => {
+        e.preventDefault();
+        handleClick(token);
+      }}
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation(); // Stop event from bubbling up
         handleClick(token);
       }}
       type="button"
