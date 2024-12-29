@@ -37,7 +37,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useJupQuote } from "@/queries/useJupQuote";
 import { Skeleton } from "../ui/skeleton";
 
-
 export const FundPage: FC<{ fundManagerPubkey: string }> = ({
   fundManagerPubkey,
 }) => {
