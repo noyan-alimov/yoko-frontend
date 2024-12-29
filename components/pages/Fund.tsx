@@ -92,7 +92,7 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
               <div className="flex flex-col gap-4">
                 <p className="text-sm text-muted-foreground">Other Tokens</p>
                 {fundQuery.data.other_tokens.map((token) => (
-                  <TokenInfo token={token} />
+                  <TokenInfo key={token.asset.mint} token={token} />
                 ))}
               </div>
             )}
