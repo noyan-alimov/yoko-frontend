@@ -30,6 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 const MainMint = {
   USDC: "USDC",
@@ -38,7 +39,7 @@ const MainMint = {
 
 const formSchema = z.object({
   main_mint: z.enum([MainMint.USDC, MainMint.SOL]),
-  authority_fee: z.coerce.number().min(0).max(100),
+  authority_fee: z.coerce.number().min(0).max(99),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -81,9 +82,6 @@ export const HomePage = () => {
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      main_mint: MainMint.USDC,
-    },
   });
 
   const [fundManagerAddress, setFundManagerAddress] = useState("");
@@ -103,17 +101,17 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-12 justify-center h-full w-full">
-      <div className="flex flex-col items-center gap-4 w-full">
+    <div className="flex-1 flex flex-col items-center gap-20 justify-center h-full w-full">
+      <div className="flex flex-col gap-4 w-full max-w-xl">
         <Input
           placeholder="Fund Manager Address"
-          className="w-full text-xs md:w-1/2 md:text-base"
+          className="w-full text-xs md:text-base"
           value={fundManagerAddress}
           onChange={(e) => setFundManagerAddress(e.target.value)}
         />
         <Button
           onClick={handleGetFund}
-          className="w-full md:w-1/2"
+          className="w-full"
           disabled={!fundManagerAddress}
           variant="secondary"
         >
@@ -128,58 +126,66 @@ export const HomePage = () => {
       {fundOfCurrentUserQuery.error && <p>Error fetching fund</p>}
       {!connected && <p>Connect your wallet to create a fund</p>}
       {connected && !fundOfCurrentUserQuery.data && (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <FormField
-              control={form.control}
-              name="main_mint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Main Token</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={MainMint.USDC}>USDC</SelectItem>
-                      <SelectItem value={MainMint.SOL}>SOL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <Card className="w-full max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle>Create Fund</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-col gap-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="main_mint"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Main Token" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={MainMint.USDC}>USDC</SelectItem>
+                          <SelectItem value={MainMint.SOL}>SOL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="authority_fee"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Authority Fee</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="authority_fee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} placeholder="Manager Fee in %" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <Button
-              className="w-full"
-              type="submit"
-              disabled={createFundMutation.isPending}
-            >
-              {createFundMutation.isPending
-                ? "Creating Fund..."
-                : "Create Fund"}
-            </Button>
-          </form>
-        </Form>
+                <Button
+                  className="w-full"
+                  type="submit"
+                  disabled={createFundMutation.isPending}
+                >
+                  {createFundMutation.isPending
+                    ? "Creating Fund..."
+                    : "Create Fund"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

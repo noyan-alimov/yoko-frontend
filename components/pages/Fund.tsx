@@ -137,7 +137,7 @@ export const FundPage: FC<{ fundManagerPubkey: string }> = ({
             </div>
             <DrawerContent>
               <DrawerHeader>
-                <DrawerTitle className="text-center">PAYOUT</DrawerTitle>
+                <DrawerTitle className="text-center">Create Payout</DrawerTitle>
               </DrawerHeader>
               <div className="p-4 pb-12 flex justify-center">
                 <CreatePayoutForm fundPubkey={fundQuery.data.fund_pubkey} />
