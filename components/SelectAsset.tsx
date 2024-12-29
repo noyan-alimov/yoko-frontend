@@ -23,33 +23,6 @@ export const SelectAsset: FC<{
 
   const tokensQuery = useTokens(debouncedSearch);
 
-  const renderToken = ({ item: token }: { item: Asset }) => {
-    return (
-      <Button
-        className="flex-row items-center justify-between w-full"
-        variant="ghost"
-        onClick={() => {
-          handleClick(token);
-        }}
-      >
-        <div className="flex gap-3 items-center">
-          <img
-            src={token.image}
-            alt={token.symbol}
-            className="w-8 h-8 rounded-full"
-          />
-          <div className="flex gap-1 items-center">
-            <p className="text-whiteGrey text-sm font-semibold">
-              {token.symbol}
-            </p>
-            {(token as JupAsset).verified && <CheckCircle2 size={18} />}
-          </div>
-        </div>
-        <div className="gap-2 items-end"></div>
-      </Button>
-    );
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -61,9 +34,41 @@ export const SelectAsset: FC<{
       </div>
       <ScrollArea className="h-[300px]">
         {tokensQuery.data
-          ? tokensQuery.data.map((token) => renderToken({ item: token }))
-          : fundOwnedAssets.map((token) => renderToken({ item: token }))}
+          ? tokensQuery.data.map((token) => (
+              <Token key={token.mint} item={token} handleClick={handleClick} />
+            ))
+          : fundOwnedAssets.map((token) => (
+              <Token key={token.mint} item={token} handleClick={handleClick} />
+            ))}
       </ScrollArea>
     </div>
+  );
+};
+
+const Token: FC<{ item: Asset; handleClick: (token: Asset) => void }> = ({
+  item: token,
+  handleClick,
+}) => {
+  return (
+    <Button
+      className="flex-row items-center justify-between w-full"
+      variant="ghost"
+      onClick={() => {
+        handleClick(token);
+      }}
+    >
+      <div className="flex gap-3 items-center">
+        <img
+          src={token.image}
+          alt={token.symbol}
+          className="w-8 h-8 rounded-full"
+        />
+        <div className="flex gap-1 items-center">
+          <p className="text-whiteGrey text-sm font-semibold">{token.symbol}</p>
+          {(token as JupAsset).verified && <CheckCircle2 size={18} />}
+        </div>
+      </div>
+      <div className="gap-2 items-end"></div>
+    </Button>
   );
 };
