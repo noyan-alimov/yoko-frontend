@@ -25,7 +25,7 @@ export const useJupQuote = ({
         };
       }
 
-      const amountToSwap = amountNumber * 10 ** inputToken.decimals;
+      const amountToSwap = Math.trunc(amountNumber * 10 ** inputToken.decimals);
       const quoteData = await fetchJupQuote(
         inputToken.mint,
         outputToken.mint,
