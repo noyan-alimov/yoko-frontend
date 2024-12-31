@@ -2,6 +2,7 @@
 
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import Link from "next/link";
+import Logo from "@/app/logo/yoko-logo-with-text.png";
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -10,7 +11,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     <div className="flex flex-col min-h-screen p-4">
       <header className="flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold">
-          Yoko
+          <img
+            src={Logo.src}
+            alt="Yoko"
+            className="w-32"
+            width={6842}
+            height={1913}
+          />
         </Link>
         <WalletMultiButton />
       </header>

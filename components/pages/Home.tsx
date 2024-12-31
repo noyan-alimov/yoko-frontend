@@ -27,10 +27,10 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "../ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 
 const MainMint = {
   USDC: "USDC",
@@ -93,7 +93,7 @@ export const HomePage = () => {
       toast.error("Invalid address");
       return;
     }
-    router.push(`/funds/${fundManagerAddress}`);
+    router.push(`/fund/${fundManagerAddress}`);
   };
 
   const onSubmit = (data: FormSchemaType) => {
@@ -119,7 +119,7 @@ export const HomePage = () => {
         </Button>
       </div>
       {fundOfCurrentUserQuery.data && publicKey && (
-        <Link href={`/funds/${publicKey.toBase58()}`}>
+        <Link href={`/fund/${publicKey.toBase58()}`}>
           <Button variant="link">View Your Fund</Button>
         </Link>
       )}
@@ -187,6 +187,68 @@ export const HomePage = () => {
           </CardContent>
         </Card>
       )}
+      <div className="flex justify-center items-center">
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="outline">How does it work?</Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="px-4 pb-8 text-sm md:text-base">
+              <p className="font-bold mb-4">
+                Yoko is a protocol on the Solana blockchain that allows anyone
+                to create and manage their own investment fund using{" "}
+                <span className="font-bold">USDC</span> or{" "}
+                <span className="font-bold">SOL</span>.
+              </p>
+              <p className="mb-4">Here's how it works:</p>
+              <ol className="list-decimal pl-6 space-y-2 mb-4">
+                <li>
+                  <span className="font-bold">Fund Creation:</span>{" "}
+                  <span className="text-muted-foreground">
+                    A fund manager sets up a new fund, choosing a main token
+                    (USDC or SOL) and defining a management fee.
+                  </span>
+                </li>
+                <li>
+                  <span className="font-bold">Trading:</span>{" "}
+                  <span className="text-muted-foreground">
+                    The manager executes swaps via Yoko's integration with
+                    Jupiter to pursue profitable trades for the fund.
+                  </span>
+                </li>
+                <li>
+                  <span className="font-bold">Payouts:</span>{" "}
+                  <span className="text-muted-foreground">
+                    When the manager creates a payout, the profits are
+                    automatically split between the depositors and the fund
+                    manager (according to the management fee).
+                  </span>
+                </li>
+                <li>
+                  <span className="font-bold">Depositor Safety:</span>{" "}
+                  <span className="text-muted-foreground">
+                    Users deposit tokens into the fund's Solana smart contract,
+                    ensuring the manager cannot withdraw these tokens directly.
+                    The manager's actions are limited to making swaps and
+                    creating payouts.
+                  </span>
+                </li>
+                <li>
+                  <span className="font-bold">Claiming Rewards:</span>{" "}
+                  <span className="text-muted-foreground">
+                    Once payouts are available, depositors can claim their share
+                    of profits.
+                  </span>
+                </li>
+              </ol>
+              <p>
+                This trust-minimized approach lets users invest with a fund
+                manager while keeping their assets secure in the smart contract.
+              </p>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </div>
     </div>
   );
 };
